@@ -9,7 +9,7 @@ import { storeToRefs } from "pinia";
 import MessageContent from "@/components/Plugins/MessageContent";
 
 const settingStore = useSettingStore();
-const { isScale } = storeToRefs(settingStore);
+const { isScale, userName } = storeToRefs(settingStore);
 const wrapperStyle = {};
 </script>
 
@@ -18,10 +18,10 @@ const wrapperStyle = {};
     width="1920"
     height="1080"
     :delay="500"
-    :fullScreen="false"
+    :fullScreen="true"
     :boxStyle="{
       background: '#03050C',
-      overflow: isScale ? 'hidden' : 'auto',
+      overflow: 'auto',
     }"
     :wrapperStyle="wrapperStyle"
     :autoScale="isScale"
@@ -38,7 +38,7 @@ const wrapperStyle = {};
 .content_wrap {
   width: 100%;
   height: 100%;
-  padding: 16px 16px 16px 16px;
+  padding: 0px 16px 0px 16px;
   box-sizing: border-box;
   background-image: url("@/assets/img/pageBg.png");
   background-size: cover;

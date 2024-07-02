@@ -1,157 +1,259 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
-import { graphic } from "echarts/core";
-import { countUserNum } from "@/api";
-import {ElMessage} from "element-plus"
+import { onMounted, reactive, ref } from "vue";
 
+import ItemTitle from "@/components/item-title";
+import { graphic } from "echarts";
+import echarts from "echarts/types/dist/echarts";
+import { Servicepopularity } from "@/api";
+import { ElMessage } from "element-plus";
+import { nanoid } from "nanoid";
 let colors = ["#0BFC7F", "#A0A0A0", "#F48C02", "#F4023C"];
 const option = ref({});
-const state = reactive({
-  lockNum: 0,
-  offlineNum: 0,
-  onlineNum: 0,
-  alarmNum: 0,
-  totalNum: 0,
-});
-const echartsGraphic = (colors: string[]) => {
-  return new graphic.LinearGradient(1, 0, 0, 0, [
-    { offset: 0, color: colors[0] },
-    { offset: 1, color: colors[1] },
-  ]);
+const xData = ref([]);
+const yData = ref([]);
+
+const selectData = ref([]);
+
+const setYData = (value: any) => {
+  yData.value = value;
 };
-const getData = () => {
-  countUserNum().then((res) => {
-    console.log("左中--用户总览",res);
-    if (res.success) {
-      state.lockNum = res.data.lockNum;
-      state.offlineNum = res.data.offlineNum;
-      state.onlineNum = res.data.onlineNum;
-      state.totalNum = res.data.totalNum;
-      state.alarmNum = res.data.alarmNum;
-      setOption();
-    }else{
-      ElMessage.error(res.msg)
+
+const setXData = (value: any) => {
+  xData.value = value;
+};
+
+const selectValue = ref("");
+
+const setSelectValue = (value: any) => {
+  selectValue.value = value;
+};
+
+const setSelectData = (value: any) => {
+  selectData.value = value;
+};
+
+const OriginalData = ref([]);
+
+const setOriginalData = (value: any) => {
+  OriginalData.value = value;
+};
+
+const timeFn = () => {
+  setInterval(() => {
+    let currentIndex =
+      selectData.value.findIndex(
+        (item: any) => item.value == selectValue.value
+      ) + 1;
+
+    if (currentIndex >= selectData.value.length) {
+      currentIndex = 0;
     }
-  }).catch(err=>{
-    ElMessage.error(err)
-  });
+
+    onSelectChange(selectData.value[currentIndex].value);
+  }, 20000);
 };
-getData();
+timeFn();
+interface ObjectItem {
+  // 定义对象的属性类型
+  label: string;
+  value: number;
+}
+
+function removeDuplicates(arr: ObjectItem[]): ObjectItem[] {
+  const uniqueMap: { [key: string]: ObjectItem } = {};
+  const result: ObjectItem[] = [];
+
+  for (const item of arr) {
+    if (!uniqueMap[item.label]) {
+      uniqueMap[item.label] = item;
+      result.push(item);
+    }
+  }
+
+  return result;
+}
+
+const getData = () => {
+  Servicepopularity()
+    .then((res) => {
+      if (res.message == "success") {
+        setOriginalData(res.keydata);
+        setXData(
+          res.keydata
+            .filter((item: any) => item.CategoryID == res.keydata[0].CategoryID)
+            .map((item: any) => item.SubcategoryName)
+        );
+        setYData(
+          res.keydata
+            .filter((item: any) => item.CategoryID == res.keydata[0].CategoryID)
+            .map((item: any) => item.sumview)
+        );
+
+        const wipSelectData = res.keydata.map((item: any) => ({
+          label: item.CategoryName,
+          value: item.CategoryID,
+        }));
+
+        const uniqueArr = removeDuplicates(wipSelectData);
+
+        setSelectValue(uniqueArr[0].value);
+        setSelectData(uniqueArr);
+
+        setOption();
+      } else {
+        ElMessage({
+          message: res.message,
+          type: "warning",
+        });
+      }
+    })
+    .catch((err) => {
+      ElMessage.error(err);
+    });
+};
+
 const setOption = () => {
   option.value = {
-    title: {
-      top: "center",
-      left: "center",
-      text: [`{value|${state.totalNum}}`, "{name|总数}"].join("\n"),
-      textStyle: {
-        rich: {
-          value: {
-            color: "#ffffff",
-            fontSize: 24,
-            fontWeight: "bold",
-            lineHeight: 20,
-            padding:[4,0,4,0]
-          },
-          name: {
-            color: "#ffffff",
-            lineHeight: 20,
-          },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        // 坐标轴指示器，坐标轴触发有效
+        type: "shadow", // 默认为直线，可选为：'line' | 'shadow'
+      },
+      padding: [13],
+      formatter: function (params) {
+        return `<div style="border-radius: 10px;">
+        <div style="color: #C4E1FF; font-size: 14px; display: flex;flex-direction: row;align-items: center;">
+        <div style="background: #1982CB; width: 10px; height: 10px; margin-right: 5px; border-radius: 50%;">
+        </div>
+          ${params[0].axisValue}
+        </div>
+        <div style="color: #FEFEFE; font-size: 14px; margin-top: 10px;">
+         数据：${params[0].data}
+        </div>                 
+        </div>`; // Customize the tooltip content as desired
+      },
+      borderColor: "rgba(164,226,247,0.5)",
+      backgroundColor: "rgba(5,25,46,0.8)",
+    },
+    xAxis: {
+      type: "category",
+      data: xData,
+      axisTick: { alignWithLabel: true },
+      axisLabel: {
+        color: "#C4E1FF", // 设置 x 轴文字颜色为红色
+        //x轴文字的配置
+        show: true,
+        interval: 0, //使x轴文字显示全
+
+        textStyle: {
+          color: "rgba(219, 225, 255, 1)",
+        },
+        formatter: function (params) {
+          var newParamsName = "";
+          var paramsNameNumber = params.length;
+          var provideNumber = 1; //一行显示几个字
+          var rowNumber = Math.ceil(paramsNameNumber / provideNumber);
+          if (paramsNameNumber > provideNumber) {
+            for (var p = 0; p < rowNumber; p++) {
+              var tempStr = "";
+              var start = p * provideNumber;
+              var end = start + provideNumber;
+              if (p == rowNumber - 1) {
+                tempStr = params.substring(start, paramsNameNumber);
+              } else {
+                tempStr = params.substring(start, end) + "\n";
+              }
+              newParamsName += tempStr;
+            }
+          } else {
+            newParamsName = params;
+          }
+          return newParamsName;
         },
       },
     },
-    tooltip: {
-      trigger: "item",
-      backgroundColor: "rgba(0,0,0,.6)",
-      borderColor: "rgba(147, 235, 248, .8)",
-      textStyle: {
-        color: "#FFF",
+    yAxis: {
+      type: "value",
+      splitLine: {
+        lineStyle: {
+          type: "dashed", // 设置网格线为虚线
+          color: "#1E2A38",
+        },
+      },
+      axisLabel: {
+        marin: 2,
+        interval: 0, //使x轴文字显示全
       },
     },
+
     series: [
       {
-        name: "用户总览",
-        type: "pie",
-        radius: ["40%", "70%"],
-        // avoidLabelOverlap: false,
+        data: yData,
+        type: "bar",
+        barWidth: 16,
         itemStyle: {
-          borderRadius: 6,
-          borderColor: "rgba(255,255,255,0)",
-          borderWidth: 2,
-        },
-        color: colors,
-        label: {
-          show: true,
-          formatter: "   {b|{b}}   \n   {c|{c}个}   {per|{d}%}  ",
-          //   position: "outside",
-          rich: {
-            b: {
-              color: "#fff",
-              fontSize: 12,
-              lineHeight: 26,
-            },
-            c: {
-              color: "#31ABE3",
-              fontSize: 14,
-            },
-            per: {
-              color: "#31ABE3",
-              fontSize: 14,
+          normal: {
+            color: {
+              type: "linear",
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                {
+                  offset: 0,
+                  color: "#459AAF",
+                },
+                {
+                  offset: 1,
+                  color: "rgba(2,75,168,0)",
+                },
+              ],
             },
           },
         },
-        emphasis: {
-          show: false,
-        },
-        legend: {
-          show: false,
-        },
-        tooltip: { show: true },
-
-        labelLine: {
-          show: true,
-          length: 20, // 第一段线 长度
-          length2: 36, // 第二段线 长度
-          smooth: 0.2,
-          lineStyle: {},
-        },
-        data: [
-          {
-            value: state.onlineNum,
-            name: "在线",
-            itemStyle: {
-              color: echartsGraphic(["#0BFC7F", "#A3FDE0"]),
-            },
-          },
-          {
-            value: state.offlineNum,
-            name: "离线",
-            itemStyle: {
-              color: echartsGraphic(["#A0A0A0", "#DBDFDD"]),
-            },
-          },
-          {
-            value: state.lockNum,
-            name: "锁定",
-            itemStyle: {
-              color: echartsGraphic(["#F48C02", "#FDDB7D"]),
-            },
-          },
-          {
-            value: state.alarmNum,
-            name: "异常",
-            itemStyle: {
-              color: echartsGraphic(["#F4023C", "#FB6CB7"]),
-            },
-          },
-        ],
       },
     ],
   };
 };
+
+const onSelectChange = (value) => {
+  setXData(
+    OriginalData.value
+      .filter((item: any) => item.CategoryID == value)
+      .map((item: any) => item.SubcategoryName)
+  );
+  setYData(
+    OriginalData.value
+      .filter((item: any) => item.CategoryID == value)
+      .map((item: any) => item.sumview)
+  );
+  setSelectValue(value);
+  setOption();
+};
+
+onMounted(() => {
+  getData();
+});
 </script>
 
 <template>
-  <v-chart class="chart" :option="option" />
+  <div>
+    <ItemTitle
+      title="服务热度榜"
+      right-item-type="select"
+      :selectDataList="selectData"
+      :selectValue="selectValue"
+      @onSelectChange="onSelectChange"
+    />
+    <v-chart class="chart" :option="option" />
+  </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.chart {
+  height: 20vh;
+  width: 100%;
+}
+</style>

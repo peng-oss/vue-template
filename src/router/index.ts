@@ -3,7 +3,17 @@ import type {RouteRecordRaw} from "vue-router"
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/index',
+    redirect: '/login',
+  },
+  {
+    path: "/login",
+    name: "login",
+    component: () => import("@/views/login/index.vue"),
+  },
+  {
+    path: "/newsDetail",
+    name: "newsDetail",
+    component: () => import("@/views/newsDetail/index.vue"),
   },
   {
     path: '/home',
@@ -24,7 +34,9 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  next();
+  next()
+
+
 })
 
 export default router

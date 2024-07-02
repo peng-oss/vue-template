@@ -1,68 +1,53 @@
 
-
+import mapItemBg from "@/assets/img/map-item-bg.png";
+import mapBg from "@/assets/img/map-bg.png"
 //mapData数据结构
 export interface MapdataType {
     name: string;
-    value: [number, number, number]; //x,y,value  第一个x 第二个y  第三个value
+    value: [number, number, {
+        servpartnersnum: number
+        proservnum: number
+        categorynum: number
+        subcategorynum: number
+    }]; //x,y,value  第一个x 第二个y  第三个value
+    
 }
 export const optionHandle = (regionCode: string,
     list: object[],
     mapData: MapdataType[]) => {
     let top = 45;
     let zoom = ["china"].includes(regionCode) ? 1.05 : 1;
+
     return {
         backgroundColor: "rgba(0,0,0,0)",
         tooltip: {
             show: false,
         },
-        legend: {
-            show: false,
-        },
+        
         visualMap: {
             seriesIndex:0,
             left: 20,
             bottom: 20,
             pieces: [
-                { gte: 1000, label: "1000个以上" }, // 不指定 max，表示 max 为无限大（Infinity）。
-                { gte: 600, lte: 999, label: "600-999个" },
-                { gte: 200, lte: 599, label: "200-599个" },
-                { gte: 50, lte: 199, label: "49-199个" },
-                { gte: 10, lte: 49, label: "10-49个" },
-                { lte: 9, label: "1-9个" }, // 不指定 min，表示 min 为无限大（-Infinity）。
-            ],
+                { gte: 1000, label: ">1000" }, // 不指定 max，表示 max 为无限大（Infinity）。
+                { gte: 501, lte: 1000, label: "501-1000" },
+                { gte: 101, lte: 500, label: "101-500" },
+                { gte: 0, lte: 100, label: "0-100" },
+            ],  
             inRange: {
-                // 渐变颜色，从小到大
-                // FFFFFF,EDF7FD,DBF0FA,C9E8F8,B7E1F6,A5D9F3,93D2F1,81CAEF,6FC2EC,5DBBEA,4AB3E8,38ACE5,26A4E3,1C9AD9,1A8DC7,
-                // 1781B5,
-                // 1573A2,136790,105A7E,0E4D6C,0C405A,093348,072636,051A24,020D12
                 color: [
-                    // "#EDF7FD",
-                    "rgba(237,247,253,.8)",
-                    // "#B7E1F6",
-                    "rgba(183,225,246,.9)",
-                    // "#81CAEF",
-                    "rgba(129,202,239,.9)",
-                    // "#38ACE5",
-                    "rgba(56,172,229,.9)",
-                    // "#1781B5",
-                    "rgba(23,129,181,.9)",
-                    // "#105A7E",
-                    "rgba(16,90,126,0.9)"
+                    '#0EADCC',
+                    '#083D8D',
+                    '#BC233C',
+                    '#DD9701'
                 ],
             },
+        
             textStyle: {
                 color: "#fff",
             },
         },
-        geo: {
-            map: regionCode,
-            roam: false,
-            selectedMode: false, //是否允许选中多个区域
-            zoom: zoom,
-            top: top,
-            // aspectScale: 0.78,
-            show: false,
-        },
+      
         series: [
             {
                 name: "MAP",
@@ -75,42 +60,42 @@ export const optionHandle = (regionCode: string,
                 zoom: zoom,
                 geoIndex: 1,
                 top: top,
+                symbolSize: function (val: any) {
+                    return 0
+                    // return val[2] / 50;
+                },
                 tooltip: {
                     show: true,
+                    extraCssText:'width:291px !important;height:182px !important;', //自定义的tooltip的大小
                     formatter: function (params: any) {
-                        if (params.data) {
-                            return params.name + "：" + params.data["value"];
-                        } else {
-                            return params.name;
-                        }
+                     
+                        if (!params.data) return;
+                        return `<div style="background-image: url('${mapItemBg}'); padding-top: 10px;  background-repeat: no-repeat; background-size: cover;width: 291px;height: 182px;">
+                        <p style="color:#FEFEFE; font-size: 16px;margin-left: 60px;">${params.name}</p>
+                       <div style="color:#D3EBFB; font-size: 12px;margin-left: 30px;">
+                       <div style="margin-top: 10px;">伙伴数量：${params.data.servpartnersnum}</div>
+                            <div style="margin-top: 8px;">产品服务数量：${params.data.value}</div>
+                                 <div style="margin-top: 8px;">服务大类数量：${params.data.categorynum}</div>
+                                      <div style="margin-top: 8px;">服务小类数量：${params.data.subcategorynum}</div>
+                       </div>
+                      </div>`;
                     },
-                    backgroundColor: "rgba(0,0,0,.6)",
-                    borderColor: "rgba(147, 235, 248, .8)",
-                    textStyle: {
-                        color: "#FFF",
-                    },
+                    padding: [0, 0],
+                    backgroundColor: 'rgba(255,255,255,0)',
+                    borderWidth: 0,
+                   
                 },
-                label: {
-                    show: false,
-                    color: "#000",
-                    // position: [-10, 0],
-                    formatter: function (val: any) {
-                        // console.log(val)
-                        if (val.data !== undefined) {
-                            return val.name.slice(0, 2);
-                        } else {
-                            return "";
-                        }
-                    },
-                    rich: {},
-                },
+                
                 emphasis: {
                     label: {
                         show: false,
                     },
                     itemStyle: {
                         // areaColor: "rgba(56,155,183,.7)",
-                        areaColor:{
+                        areaColor: {
+                              // Add background image here
+                 
+                            size: 'cover',
                             type: "radial",
                             x: 0.5,
                             y: 0.5,
@@ -134,21 +119,23 @@ export const optionHandle = (regionCode: string,
                     borderColor: "rgba(147, 235, 248, .8)",
                     borderWidth: 1,
                     areaColor: {
-                        type: "radial",
-                        x: 0.5,
-                        y: 0.5,
+                        image: mapBg, // Replace with your image URL
+                        repeat: 'repeat-y',
+                        // type: "radial",
+                        x: 70,
+                        y: -30,
                         r: 0.8,
-                        colorStops: [
-                            {
-                                offset: 0,
-                                color: "rgba(147, 235, 248, 0)", // 0% 处的颜色
-                            },
-                            {
-                                offset: 1,
-                                color: "rgba(147, 235, 248, .2)", // 100% 处的颜色
-                            },
-                        ],
-                        globalCoord: false, // 缺为 false
+                        // colorStops: [
+                        //     {
+                        //         offset: 0,
+                        //         color: "rgba(147, 235, 248, 0)", // 0% 处的颜色
+                        //     },
+                        //     {
+                        //         offset: 1,
+                        //         color: "rgba(147, 235, 248, .2)", // 100% 处的颜色
+                        //     },
+                        // ],
+                        // globalCoord: false, // 缺为 false
                     },
                     shadowColor: "rgba(128, 217, 248, .3)",
                     shadowOffsetX: -2,
@@ -156,66 +143,9 @@ export const optionHandle = (regionCode: string,
                     shadowBlur: 10,
                 },
             },
-            {
-                data: mapData,
-                type: "effectScatter",
-                coordinateSystem: "geo",
-                symbolSize: function (val: any) {
-                    return 4;
-                    // return val[2] / 50;
-                },
-                legendHoverLink: true,
-                showEffectOn: "render",
-                rippleEffect: {
-                    // period: 4,
-                    scale: 6,
-                    color: "rgba(255,255,255, 1)",
-                    brushType: "fill",
-                },
-                tooltip: {
-                    show: true,
-                    formatter: function (params: any) {
-                        if (params.data) {
-                            return params.name + "：" + params.data["value"][2];
-                        } else {
-                            return params.name;
-                        }
-                    },
-                    backgroundColor: "rgba(0,0,0,.6)",
-                    borderColor: "rgba(147, 235, 248, .8)",
-                    textStyle: {
-                        color: "#FFF",
-                    },
-                },
-                label: {
-                    formatter: (param: any) => {
-                        return param.name.slice(0, 2);
-                    },
-
-                    fontSize: 11,
-                    offset: [0, 2],
-                    position: "bottom",
-                    textBorderColor: "#fff",
-                    textShadowColor: "#000",
-                    textShadowBlur: 10,
-                    textBorderWidth: 0,
-                    color: "#FFF",
-                    show: true,
-                },
-                // colorBy: "data",
-                itemStyle: {
-                    color: "rgba(255,255,255,1)",
-                    borderColor: "rgba(2255,255,255,2)",
-                    borderWidth: 4,
-                    shadowColor: "#000",
-                    shadowBlur: 10,
-                },
-            },
+          
         ],
-        //动画效果
-        // animationDuration: 1000,
-        // animationEasing: 'linear',
-        // animationDurationUpdate: 1000
+      
     };
 }
 

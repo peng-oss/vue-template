@@ -106,6 +106,7 @@ export const GET = async (url: string, params: Params): Promise<any> => {
  */
 export const POST = async (url: string, params: Params): Promise<any> => {
   try {
+
     params = isEncryptionParam(params);
     const data = await axios.post(`${baseUrl}${url}`, params);
     return data.data;

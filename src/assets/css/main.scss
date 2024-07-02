@@ -53,6 +53,15 @@ html .el-message {
     }
   }
 
+  html .el-select{
+    --el-select-input-color:#46BEFF;
+    --el-select-border-color-hover:#152840;
+  }
+  html .el-input{
+    --el-input-border-color:#F0F3F7;
+    --el-input-text-color:#131D34
+  }
+
   .beautify-scroll-def {
     overflow-y: auto;
   
@@ -95,4 +104,10 @@ html .el-message {
     display: flex;
     min-height: calc(100% - 60px);
     justify-content: space-between;
+  }
+
+  @font-face {
+    font-family: 'YouSheBiaoTiHei';
+    font-style: normal;
+    src: local('YouSheBiaoTiHei'), url(../fonts/YouSheBiaoTiHei.ttf) format('truetype');
   }

@@ -1,193 +1,181 @@
 <script setup lang="ts">
-import { rightBottom } from "@/api";
-import SeamlessScroll from "@/components/seamless-scroll";
-import { computed, onMounted, reactive } from "vue";
-import { useSettingStore } from "@/stores";
-import { storeToRefs } from "pinia";
-import EmptyCom from "@/components/empty-com";
+import { onMounted, reactive, ref } from "vue";
+import ItemTitle from "@/components/item-title";
+import { use } from "echarts/core";
+import { GraphChart } from "echarts/charts";
 import { ElMessage } from "element-plus";
+import axios from "axios";
+import { TreeChart } from "echarts/charts";
+import { ScriptsCategoryRelat } from "@/api";
+import { EleResize } from "@/utils/esresize"; // 图表自适应
+use([TreeChart]);
+import screenfull from "screenfull";
+const box = ref(null);
 
-const settingStore = useSettingStore();
-const { defaultOption, indexConfig } = storeToRefs(settingStore);
-const state = reactive<any>({
-  list: [],
-  defaultOption: {
-    ...defaultOption.value,
-    singleHeight: 252,
-    limitScrollNum: 3,
-    // step:3
-  },
-  scroll: true,
-});
+const myChart = ref(null);
+const option = ref({});
+const chartData = ref({});
+
+const isScreenFull = ref(false);
+
+const setIsScreenFull = (value) => {
+  isScreenFull.value = value;
+};
+
+const setChartData = (value: any) => {
+  chartData.value = value;
+};
+
+const omitChatData = ref({});
+
+const setOmitChatData = (value: any) => {
+  omitChatData.value = value;
+};
+
+function transformData(data: any[]): any {
+  const result: any = {
+    name: "全部",
+    children: [],
+  };
+
+  data.forEach((item) => {
+    const script = {
+      name: item.CategoryName,
+      children: [
+        {
+          name: item.SubcategoryName,
+          children: [
+            {
+              name: item.ScriptName,
+            },
+          ],
+        },
+      ],
+    };
+    result.children.push(script);
+  });
+
+  return result;
+}
 
 const getData = () => {
-  rightBottom({ limitNum: 20 })
-    .then((res) => {
-      console.log("右下", res);
-      if (res.success) {
-        state.list = res.data.list;
-      } else {
-        ElMessage({
-          message: res.msg,
-          type: "warning",
-        });
-      }
-    })
-    .catch((err) => {
-      ElMessage.error(err);
-    });
+  ScriptsCategoryRelat().then((res: any) => {
+    if (res.message === "success") {
+      setChartData(transformData(res.data));
+      setOmitChatData(transformData(res.data.splice(0, 3)));
+      setOption();
+    } else {
+      ElMessage({
+        message: res.msg,
+        type: "warning",
+      });
+    }
+  });
 };
 
-const comName = computed(() => {
-  if (indexConfig.value.rightBottomSwiper) {
-    return SeamlessScroll;
-  } else {
-    return EmptyCom;
+const setOption = () => {
+  try {
+    option.value = {
+      tooltip: {
+        trigger: "item",
+        triggerOn: "mousemove",
+      },
+      initialTreeDepth: 3,
+      series: [
+        {
+          type: "tree",
+          data: [chartData.value],
+          top: "1%",
+          left: "7%",
+          bottom: "1%",
+          right: "20%",
+          symbolSize: 7,
+          label: {
+            position: "top",
+
+            fontSize: 14,
+            color: "#C4E1FF",
+          },
+          leaves: {
+            label: {
+              position: "right",
+              verticalAlign: "middle",
+              align: "left",
+            },
+          },
+          emphasis: {
+            focus: "descendant",
+          },
+          expandAndCollapse: true,
+          animationDuration: 550,
+          animationDurationUpdate: 750,
+          initialTreeDepth: 1,
+          lineStyle: {
+            color: "#20C4D3",
+          },
+          itemStyle: {
+            color: "#00D5FF",
+            borderColor: "#FDFEFF",
+          },
+        },
+      ],
+    };
+
+    console.log("Option set successfully");
+  } catch (error) {
+    console.error("Error setting option:", error);
+  }
+};
+
+const onClickFullScreen = () => {
+  screenfull.toggle(box.value);
+};
+
+screenfull.on("change", () => {
+  if (screenfull.element?.id === "right-bottom") {
+    setIsScreenFull(screenfull.isFullscreen);
+  }
+
+  if (!screenfull.isFullscreen) {
+    setIsScreenFull(false);
   }
 });
-function montionFilter(val: any) {
-  // console.log(val);
-  return val ? Number(val).toFixed(2) : "--";
-}
-const handleAddress = (item: any) => {
-  return `${item.provinceName}/${item.cityName}/${item.countyName}`;
-};
+
 onMounted(() => {
   getData();
+  window.addEventListener("resize", () => {
+    if (myChart.value) {
+      setTimeout(() => {
+        setOption();
+
+        myChart.value.resize();
+      }, 0);
+    }
+  });
 });
 </script>
 
 <template>
-  <div class="right_bottom_wrap beautify-scroll-def" :class="{ 'overflow-y-auto': !indexConfig.rightBottomSwiper }">
-    <component
-      :is="comName"
-      :list="state.list"
-      v-model="state.scroll"
-      :singleHeight="state.defaultOption.singleHeight"
-      :step="state.defaultOption.step"
-      :limitScrollNum="state.defaultOption.limitScrollNum"
-      :hover="state.defaultOption.hover"
-      :singleWaitTime="state.defaultOption.singleWaitTime"
-      :wheel="state.defaultOption.wheel"
-    >
-      <ul class="right_bottom">
-        <li class="right_center_item" v-for="(item, i) in state.list" :key="i">
-          <span class="orderNum">{{ i + 1 }}</span>
-          <div class="inner_right">
-            <div class="dibu"></div>
-            <div class="flex">
-              <div class="info">
-                <span class="labels">设备ID：</span>
-                <span class="text-content zhuyao"> {{ item.gatewayno }}</span>
-              </div>
-              <div class="info">
-                <span class="labels">型号：</span>
-                <span class="text-content"> {{ item.terminalno }}</span>
-              </div>
-              <div class="info">
-                <span class="labels">告警值：</span>
-                <span class="text-content warning"> {{ montionFilter(item.alertvalue) }}</span>
-              </div>
-            </div>
+  <div class="container" id="right-bottom" ref="box">
+    <ItemTitle
+      title="话术库与服务小类的关系"
+      right-item-type="fullScreen"
+      @on-click-full-screen="onClickFullScreen"
+    />
 
-            <div class="flex">
-              <div class="info">
-                <span class="labels shrink-0"> 地址：</span>
-                <span class="ciyao truncate" style="font-size: 12px; width: 220px" :title="handleAddress(item)">
-                  {{ handleAddress(item) }}</span
-                >
-              </div>
-              <div class="info time shrink-0">
-                <span class="labels">时间：</span>
-                <span class="text-content" style="font-size: 12px"> {{ item.createtime }}</span>
-              </div>
-            </div>
-            <div class="flex">
-              <div class="info">
-                <span class="labels">报警内容：</span>
-                <span class="text-content ciyao" :class="{ warning: item.alertdetail }">
-                  {{ item.alertdetail || "无" }}</span
-                >
-              </div>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </component>
+    <v-chart
+      class="chart"
+      :style="{ height: isScreenFull ? '100vh' : '280px' }"
+      ref="myChart"
+      :option="option"
+    />
   </div>
 </template>
 
 <style scoped lang="scss">
-.right_bottom {
-  width: 100%;
-  height: 100%;
-
-  .right_center_item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: auto;
-    padding: 10px;
-    font-size: 14px;
-    color: #fff;
-
-    .orderNum {
-      margin: 0 20px 0 -20px;
-    }
-
-    .inner_right {
-      position: relative;
-      height: 100%;
-      width: 400px;
-      flex-shrink: 0;
-      line-height: 1.5;
-
-      .dibu {
-        position: absolute;
-        height: 2px;
-        width: 104%;
-        background-image: url("@/assets/img/zuo_xuxian.png");
-        bottom: -12px;
-        left: -2%;
-        background-size: cover;
-      }
-    }
-
-    .info {
-      margin-right: 10px;
-      display: flex;
-      align-items: center;
-
-      .labels {
-        flex-shrink: 0;
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.6);
-      }
-
-      .zhuyao {
-        color: $primary-color;
-        font-size: 15px;
-      }
-
-      .ciyao {
-        color: rgba(255, 255, 255, 0.8);
-      }
-
-      .warning {
-        color: #e6a23c;
-        font-size: 15px;
-      }
-    }
+.container {
+  .chart {
+    width: 100%;
   }
-}
-
-.right_bottom_wrap {
-  overflow: hidden;
-  width: 100%;
-  height: 252px;
-}
-
-.overflow-y-auto {
-  overflow-y: auto;
 }
 </style>

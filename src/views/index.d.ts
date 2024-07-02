@@ -2,7 +2,8 @@ export interface DateDataType {
     dateDay: string,
     dateYear: string,
     dateWeek: string,
-    timing: NodeJS.Timer
+    timing: NodeJS.Timer | null
+    dateMinAndSec: string
 }   
 
 interface CountUpOptions {
