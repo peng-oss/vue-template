@@ -5,8 +5,8 @@ interface UtilVarType {
     ENC:boolean,//是否进行加密
 }
 
-const UtilVar:UtilVarType = {
-    baseUrl:"api",
+const UtilVar: UtilVarType = {
+    baseUrl:'api',
     code:401, //登陆过期
     noContentCode:204, //请求成功但没有内容
     ENC:false,

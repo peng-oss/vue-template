@@ -2,8 +2,7 @@
 import { ref } from "vue";
 import { RouterView } from "vue-router";
 import ScaleScreen from "@/components/scale-screen";
-import Headers from "./header.vue";
-import Setting from "./setting.vue";
+
 import { useSettingStore } from "@/stores/index";
 import { storeToRefs } from "pinia";
 import MessageContent from "@/components/Plugins/MessageContent";
@@ -21,13 +20,12 @@ const wrapperStyle = {};
     :fullScreen="true"
     :boxStyle="{
       background: '#03050C',
-      overflow: 'auto',
+      overflow: 'hidden',
     }"
     :wrapperStyle="wrapperStyle"
     :autoScale="isScale"
   >
     <div class="content_wrap">
-      <Headers />
       <RouterView />
       <MessageContent />
     </div>
@@ -40,8 +38,5 @@ const wrapperStyle = {};
   height: 100%;
   padding: 0px 16px 0px 16px;
   box-sizing: border-box;
-  background-image: url("@/assets/img/pageBg.png");
-  background-size: cover;
-  background-position: center center;
 }
 </style>

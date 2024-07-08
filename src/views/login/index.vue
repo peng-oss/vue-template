@@ -68,17 +68,16 @@ const form = reactive({
       overflow: 'auto',
     }"
     :wrapperStyle="wrapperStyle"
-    :autoScale="isScale"
   >
     <div class="login-container">
       <div class="login-content">
         <div class="flex flex-row">
-          <img src="@/assets/img/login-logo.png" alt="" />
+          <!-- <img src="@/assets/img/login-logo.png" alt="" /> -->
 
-          <div>
+          <!-- <div>
             <span class="title">星海灵动</span>
             <div class="subTitle">AI协作，灵动创意！</div>
-          </div>
+          </div> -->
         </div>
 
         <div class="login-content-form">
@@ -107,16 +106,6 @@ const form = reactive({
                   >登录/注册</el-button
                 >
               </el-form-item>
-
-              <!-- <el-form-item prop="type">
-                <el-checkbox
-                  v-model="form.type"
-                  value="Online activities"
-                  name="type"
-                >
-                  我已仔细阅读并同意
-                </el-checkbox>
-              </el-form-item> -->
             </el-form>
           </div>
         </div>

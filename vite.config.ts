@@ -30,12 +30,12 @@ export default defineConfig(({ command, mode }: ConfigEnv): UserConfig => {
       port: 8112,
       open: false, //自动打开 
       proxy: { // 本地开发环境通过代理实现跨域，生产环境使用 nginx 转发
-        '/api': {
-          target: 'http://47.115.38.13:5680',
-          changeOrigin: true,
-          ws: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
-        },
+        // '/api': {
+        //   target: 'http://47.115.38.13:5680',
+        //   changeOrigin: true,
+        //   ws: true,
+        //   rewrite: (path) => path.replace(/^\/api/, ''),
+        // },
       }
     },
     resolve: {
